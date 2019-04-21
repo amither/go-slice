@@ -49,6 +49,20 @@ func cal(req chan []byte, out chan []byte, s []byte) {
 	}()
 }
 
+func  cal_co(s []byte) {
+	req, out := make(chan []byte), make(chan []byte)
+
+	cal(req, out, s)
+	for _, c := range s {
+		sl := []byte{c}
+		req <- sl
+	}
+
+	close(req)
+
+	<-out
+}
+/*
 func main() {
 	s := make([]byte, 0)
 	for c := byte('a'); c <= 'd'; c++ {
@@ -56,14 +70,26 @@ func main() {
 	}
 
 	req, out := make(chan []byte), make(chan []byte)
-	cal(req, out, s)
 
+	cal(req, out, s)
 	for _, c := range s {
 		sl := make([]byte,0)
 		sl = append(sl, c)
 		req <- sl
 	}
+
 	close(req)
 
 	<-out
+}
+*/
+func main () {
+    fmt.Println("co version")
+	s := []byte{'1', '2', '3', '4'}
+    cal_co(s)
+
+    
+    fmt.Println("signle version")
+	p := make([]byte, len(s), len(s))
+	cal_single(p, s, 0)
 }
