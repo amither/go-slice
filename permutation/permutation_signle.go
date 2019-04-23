@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func cal_single(prefix []byte, s []byte, cur int) {
+func permutaionImpl(prefix []byte, s []byte, cur int) {
 	if cur == len(s) {
 		fmt.Println(prefix)
 		return
@@ -21,9 +21,14 @@ func cal_single(prefix []byte, s []byte, cur int) {
 
 		if !exist {
 			prefix[cur] = b
-			cal_single(prefix, s, cur+1)
+			permutaionImpl(prefix, s, cur+1)
 		}
 
 	}
 }
 
+func Permutation(s []byte) {
+	//前缀slice
+	p := make([]byte, len(s), len(s))
+	permutaionImpl(p, s, 0)
+}

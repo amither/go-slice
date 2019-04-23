@@ -2,94 +2,89 @@ package main
 
 import (
 	"fmt"
+	"sync"
 )
 
-func cal1(in []byte, s []byte, next chan []byte) {
-    if len(in) == len(s) {
-        fmt.Println(in)
-    } else {
-        for _, c := range s {
-            exist := false
-            for _, e := range in {
-                if e == c {
-                    exist = true
-                    break
-                }
-            }
-            if exist {
-                continue
-            } 
+func prefixIncrement(in []byte, s []byte, next chan []byte) {
+	for _, c := range s {
+		exist := false
+		for _, e := range in {
+			if e == c {
+				exist = true
+				break
+			}
+		}
+		if exist {
+			continue
+		}
 
-            temp := make([]byte, 0) 
-            temp = append(temp, in...)
-            temp = append(temp, c)
-            next <- temp
-        }
-    }
-} 
+		temp := make([]byte, 0)
+		temp = append(temp, in...)
+		temp = append(temp, c)
+		next <- temp
+	}
+}
 
-func cal(req chan []byte, out chan []byte, s []byte) {
+func permutaionConImpl(req chan []byte, out chan []byte, s []byte) {
 	go func() {
-		//end
-        v, ok := <- req
+		//递归退出条件: len(v) == len(s)-1
+		v, ok := <-req
+		if !ok {
+			return
+		}
 
-        if !ok {
-            close(out)
-            return
-        }
+		next := out
+		if len(v) != len(s)-1 {
+			next = make(chan []byte)
+			permutaionConImpl(next, out, s)
+		}
 
-		next := make(chan []byte)
-		cal(next, out, s)
-
-        cal1(v, s, next)
+		prefixIncrement(v, s, next)
 		for in := range req {
-            cal1(in, s, next)
+			prefixIncrement(in, s, next)
 		}
 		close(next)
 	}()
 }
 
-func  cal_co(s []byte) {
+// PermutationConcurrency  并发计算全排列
+func PermutationConcurrency(s []byte) {
 	req, out := make(chan []byte), make(chan []byte)
 
-	cal(req, out, s)
+	//开启goroutine计算
+	permutaionConImpl(req, out, s)
+
+	over := make(chan struct{})
+	go func() {
+		for res := range out {
+			fmt.Println(res)
+		}
+		close(over)
+	}()
+
 	for _, c := range s {
 		sl := []byte{c}
 		req <- sl
 	}
-
 	close(req)
 
-	<-out
+	<-over
+
 }
-/*
-func main() {
-	s := make([]byte, 0)
-	for c := byte('a'); c <= 'd'; c++ {
-		s = append(s, c)
-	}
 
-	req, out := make(chan []byte), make(chan []byte)
-
-	cal(req, out, s)
+func PermutationConcurrencyVertical(s []byte) {
+	var sg sync.WaitGroup
 	for _, c := range s {
-		sl := make([]byte,0)
-		sl = append(sl, c)
-		req <- sl
+		sg.Add(1)
+
+		//要传参数进去，避免只取到最后一个值
+		go func(k byte) {
+			p := make([]byte, len(s), len(s))
+			p[0] = k
+			permutaionImpl(p, s, 1)
+			defer sg.Done()
+		}(c)
 	}
 
-	close(req)
-
-	<-out
-}
-*/
-func main () {
-    fmt.Println("co version")
-	s := []byte{'1', '2', '3', '4'}
-    cal_co(s)
-
-    
-    fmt.Println("signle version")
-	p := make([]byte, len(s), len(s))
-	cal_single(p, s, 0)
+	sg.Wait()
 }
