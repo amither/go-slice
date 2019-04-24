@@ -88,3 +88,4 @@ func PermutationConcurrencyVertical(s []byte) {
 
 	sg.Wait()
 }
+

@@ -148,6 +148,44 @@ func PermutationConcurrencyVertical(s []byte) {
 }
 ```
 
+## 并发3
+
+如果能提前知道要开几个goroutine，那就可以不用递归的方式创建goroutine了，代码逻辑会更清晰易懂。
+
+```go
+func permutaionCal(left chan []byte, right chan []byte, s []byte) {
+	for v := range left {
+		prefixIncrement(v, s, right)
+	}
+	close(right)
+}
+
+func PermutaionChain(s []byte) {
+	leftmost := make(chan []byte)
+	left := leftmost
+	right := leftmost
+
+	for i := 0; i < len(s)-1; i++ {
+		right = make(chan []byte)
+		go permutaionCal(left, right, s)
+		left = right
+	}
+
+	go func(c chan []byte) {
+		for _, v := range s {
+			c <- []byte{v}
+		}
+		close(c)
+	}(leftmost)
+
+	for v := range right {
+		fmt.Println(v)
+	}
+}
+```
+
+
+
 ## 代码地址
 
 https://github.com/amither/go-slice/tree/master/permutation
