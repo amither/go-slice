@@ -183,8 +183,18 @@ func PermutaionChain(s []byte) {
 	}
 }
 ```
+## 对比
+benchmark 4个byte的全排列：
+递归  5000	    308919 ns/op	     768 B/op	      24 allocs/op
+并发1 5000	    382600 ns/op	    1774 B/op	      93 allocs/op
+并发3 5000	    310740 ns/op	    1675 B/op	      92 allocs/op
 
+benchmark 7个byte的全排列：
+递归  20	  62281150 ns/op	  161372 B/op	    5040 allocs/op
+并发1 20	  71853908 ns/op	  275384 B/op	   18781 allocs/op
+并发3 20	  84848114 ns/op	  275663 B/op	   18780 allocs/op
 
+递归版本最快，分配内存最少，应为中间结果都是写入一个前缀slice的，通过cur下标来标记slice的结尾。并发版本要在不同的goroutine之间传递slice，分配的内存相对多一些。在这个例子中，并发没有表现出比单线程更快，原因可能是每个goroutine的计算过程较短，不能充分发挥出多核的优势，反而将时间浪费在了goroutine之间的消息传递上。
 
 ## 代码地址
 
